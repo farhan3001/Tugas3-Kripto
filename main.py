@@ -231,26 +231,35 @@ class MainWindow:
     def generateCallback(self):
         self.freezeControls()
         self.status.set("---")
-        try:
+
+        try: 
+        
             signing = Signing()
 
             path = self.fileEntry.get()
             publicKey, privateKey = signing.generateKeyPair()
-            publicKey = str(publicKey)
+            publicKeyString = str(publicKey)
             signing.generateSignMessage(path, privateKey)
-            self.publicKeyGenerated.set(publicKey)
+            self.publicKeyGenerated.set(publicKeyString)
 
-            print("")
-            print("Public Key: ")
-            print(publicKey)
-            print("---------------------------------------------------")
-            print("Private Key: ")
-            print(privateKey)
-            print("")
+            e, n = publicKey
+            d, n = privateKey
+
+            filePrivateKey = open("./RSAKey/key.pri","w")
+            filePublicKey = open("./RSAKey/key.pub", "w")
+
+            filePrivateKey.write("Private Key:\n")
+            filePrivateKey.write("("+str(d) + ", " + str(n)+")")
+
+            filePublicKey.write("Public Key:\n")
+            filePublicKey.write("("+str(e) + ", " + str(n)+")")
+
+            filePrivateKey.close()
+            filePublicKey.close()  
 
         except Exception as e:
-            self.status.set(e)
-        
+            self.status.set(e)    
+
         self.unfreezeControls()    
 
     def validateCallback(self):
