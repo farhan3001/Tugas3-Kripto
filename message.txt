@@ -1,5 +1,5 @@
 Testing Crypto
 
-This is a test essage to test out crypto signing
+This is a test message to test out crypto signing
 
 -- Muhammad Farhan

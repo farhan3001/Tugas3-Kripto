@@ -170,6 +170,9 @@ class Signing():
         message = self.getMessageInSignedFile(path)
         sign = self.getSignInSignedFile(path)
 
+        if sign == None or sign == "":
+            return
+
         signHex = bytes.fromhex(sign)
 
         return self.sha3(message) == self.decrypt(signHex, publicKey)
