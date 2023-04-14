@@ -106,7 +106,7 @@ class MainWindow:
             bg="#fff",
             textvariable=self.publicKeyGenerated,
             exportselection=0,
-            state='disabled',
+            # state='disabled',
             relief=tkinter.FLAT,
         )
         self.generatePublicKey.grid(
@@ -237,6 +237,7 @@ class MainWindow:
             path = self.fileEntry.get()
             publicKey, privateKey = signing.generateKeyPair()
             # print(publicKey)
+            publicKey = str(publicKey)
             signing.generateSignMessage(path, privateKey)
             self.publicKeyGenerated.set(publicKey)
 
