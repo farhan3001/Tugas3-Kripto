@@ -228,6 +228,22 @@ class MainWindow:
             fg="#ffffff", bg="#aaaaaa")
         self.statusBtn.update()
 
+    def saveKeyToFile(self,publicKey,privateKey):
+        e, n = publicKey
+        d, n = privateKey
+
+        filePrivateKey = open("./RSAKey/key.pri","w")
+        filePublicKey = open("./RSAKey/key.pub", "w")
+
+        filePrivateKey.write("Private Key:\n")
+        filePrivateKey.write("("+str(d) + ", " + str(n)+")")
+
+        filePublicKey.write("Public Key:\n")
+        filePublicKey.write("("+str(e) + ", " + str(n)+")")
+
+        filePrivateKey.close()
+        filePublicKey.close()
+
     def generateCallback(self):
         self.freezeControls()
         self.status.set("---")
@@ -238,24 +254,12 @@ class MainWindow:
 
             path = self.fileEntry.get()
             publicKey, privateKey = signing.generateKeyPair()
+
+            self.saveKeyToFile(publicKey,privateKey)
+  
             publicKeyString = str(publicKey)
             signing.generateSignMessage(path, privateKey)
             self.publicKeyGenerated.set(publicKeyString)
-
-            e, n = publicKey
-            d, n = privateKey
-
-            filePrivateKey = open("./RSAKey/key.pri","w")
-            filePublicKey = open("./RSAKey/key.pub", "w")
-
-            filePrivateKey.write("Private Key:\n")
-            filePrivateKey.write("("+str(d) + ", " + str(n)+")")
-
-            filePublicKey.write("Public Key:\n")
-            filePublicKey.write("("+str(e) + ", " + str(n)+")")
-
-            filePrivateKey.close()
-            filePublicKey.close()  
 
         except Exception as e:
             self.status.set(e)    
