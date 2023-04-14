@@ -274,12 +274,8 @@ class MainWindow:
 
             path = self.fileEntry.get()
             publicKey = self.publicKeyGenerated.get()
-
-            # print(publicKey)
             
             publicKeyTupple = tuple(map(int, publicKey[1:-1].split(',')))
-
-            # print(publicKeyTupple)
 
             if signing.validateSignedMessage(path, publicKeyTupple) == True:
                 self.status.set("File: Authentic")
