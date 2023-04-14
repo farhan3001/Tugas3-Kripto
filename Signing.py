@@ -96,6 +96,32 @@ class Signing():
             if n % i == 0:
                 return False
         return True
+    
+    def saveKeyToFile(self,p,q,n,phi,e,d):
+
+        filePrivateKey = open("./RSAKey/key.pri","w")
+        filePublicKey = open("./RSAKey/key.pub", "w")
+
+        filePrivateKey.write("Parameter yang digunakan untuk pembangkitan private key:\n")
+        filePrivateKey.write("p: " + str(p) + ", " + "q: " + str(q) + "\n")
+        filePrivateKey.write("n: " + str(n) + ", " + "phi: " + str(phi) + "\n")
+        filePrivateKey.write("")
+        filePrivateKey.write("--------------------------------------------------------\n")
+        filePrivateKey.write("")
+        filePrivateKey.write("Private Key:\n")
+        filePrivateKey.write("("+str(d) + ", " + str(n)+")")
+
+        filePublicKey.write("Parameter yang digunakan untuk pembangkitan public key:\n")
+        filePublicKey.write("p: " + str(p) + ", " + "q: " + str(q) + "\n")
+        filePublicKey.write("n: " + str(n) + ", " + "phi: " + str(phi) + "\n")
+        filePublicKey.write("")
+        filePublicKey.write("-------------------------------------------------------\n")
+        filePublicKey.write("")
+        filePublicKey.write("Public Key:\n")
+        filePublicKey.write("("+str(e) + ", " + str(n)+")")
+
+        filePrivateKey.close()
+        filePublicKey.close()
         
     def generateKeyPair(self):
         p  = self.primeGenerator()
@@ -112,6 +138,8 @@ class Signing():
             g = gcd(e, phi)
 
         d = self.extendedGcd(e, phi)[1]
+
+        self.saveKeyToFile(p,q,n,phi,e,d)
 
         return ((e, n), (d, n))
     
@@ -171,7 +199,7 @@ class Signing():
         sign = self.getSignInSignedFile(path)
 
         if sign == None or sign == "":
-            return
+            return False
 
         signHex = bytes.fromhex(sign)
 
