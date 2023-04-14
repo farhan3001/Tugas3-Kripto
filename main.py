@@ -236,10 +236,17 @@ class MainWindow:
 
             path = self.fileEntry.get()
             publicKey, privateKey = signing.generateKeyPair()
-            # print(publicKey)
             publicKey = str(publicKey)
             signing.generateSignMessage(path, privateKey)
             self.publicKeyGenerated.set(publicKey)
+
+            print("")
+            print("Public Key: ")
+            print(publicKey)
+            print("---------------------------------------------------")
+            print("Private Key: ")
+            print(privateKey)
+            print("")
 
         except Exception as e:
             self.status.set(e)
