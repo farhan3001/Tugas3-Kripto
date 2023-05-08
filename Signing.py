@@ -1,39 +1,27 @@
 import random
-import math
 from sympy import *
 import sympy.ntheory as nt
 import hashlib
+import gzip
+import pickle
 
 class Signing():
-
     def getMessageInSignedFile(self, path):
-        selectedElements = []
-        with open(path, "r") as f:
-            for line in f:
-                if '<d>' not in line:
-                    selectedElements.append(line)
+        with open(path, 'r') as file:
+            lines = file.readlines()
 
-        selectedElements.pop()
-        removeSpacing = selectedElements[-1].replace("\n","")
-        selectedElements.pop()
-        selectedElements.append(removeSpacing)
-        f.close()
+        prefix = "<d>"    
 
-        result = ''
-        currentGroup = ''
+        lines = [line for line in lines if not line.startswith(prefix)]
+        lines.pop()
 
-        for line in selectedElements:
-            if line == '\n':
-                if currentGroup:
-                    result += currentGroup.strip() + '\n\n'
-                    currentGroup = ''
-            else:
-                currentGroup += line
+        lineLast = lines[-1]
+        lineLast = lineLast.strip('\n')
 
-        if currentGroup:
-            result += currentGroup.strip()
+        lines.pop()
+        lines.append(lineLast)
 
-        return (result)    
+        return ''.join(lines)
 
     def getSignInSignedFile(self, path):
         sign = ""
@@ -69,7 +57,17 @@ class Signing():
         else:
             file = open(path, "a+")
             file.seek(0)
-            file.write("\n"+"\n"+messageSigned)
+            file.write("\n\n"+messageSigned)
+
+    def compressRSA(self, ciphertext):
+        ciphertextBytes = pickle.dumps(ciphertext)
+        compressed_bytes = gzip.compress(ciphertextBytes)
+        return compressed_bytes
+
+    def decompressRSA(self, compressedBytes):
+        ciphertextBytes = gzip.decompress(compressedBytes)
+        ciphertext = pickle.loads(ciphertextBytes)
+        return ciphertext
     
     def gcd(self,a, b):
         while b != 0:
@@ -144,55 +142,45 @@ class Signing():
         return ((e, n), (d, n))
     
     def encrypt(self, plaintext, privateKey):
-        d, n = privateKey
-        sizeBlock = math.ceil(n.bit_length() / 8)
-        plainBlocks = [bytes.fromhex('00') + plaintext[i:i+sizeBlock-1] for i in range(0, len(plaintext), sizeBlock-1)]
+        d = privateKey[0]
+        n = privateKey[1]
+        ciphertext = [pow(ord(char), d, n) for char in plaintext]
+        print(ciphertext)
+        print("")
 
-        padLength = sizeBlock - len(plainBlocks[-1])
-        if padLength:
-            plainBlocks[-1] = bytes.fromhex('00') * padLength + plainBlocks[-1]
-
-        plainBlocksCombine = [int.from_bytes(byte, byteorder='big') for byte in plainBlocks]
-
-        cipherBlocks = [pow(block, d, n) for block in plainBlocksCombine]
-        cipherBlocksCombine = [block.to_bytes(length=sizeBlock, byteorder='big') for block in cipherBlocks]
-
-        ciphertext = b''.join(cipherBlocksCombine)
-        ciphertext += padLength.to_bytes(length=4, byteorder='big')
+        ciphertext =self.compressRSA(ciphertext)
 
         return ciphertext.hex()
 
+
     def decrypt(self,ciphertext, publicKey):
-        e, n = publicKey
-        blocksize = (n.bit_length() + 7) // 8
+        e = publicKey[0]
+        n = publicKey[1]
 
-        cipherBlocks, padding = ciphertext[:-4], int.from_bytes(ciphertext[-4:], byteorder='big')
-        cipherBlocks = [int.from_bytes(cipherBlocks[i:i+blocksize], byteorder='big') for i in range(0, len(cipherBlocks), blocksize)]
+        ciphertext = bytes.fromhex(ciphertext)
+        ciphertext = self.decompressRSA(ciphertext)
 
-        plainBlocks = [pow(c, e, n).to_bytes(length=blocksize, byteorder='big') for c in cipherBlocks]
-        plainBlocks[-1] = plainBlocks[-1][padding:]
-
-        plaintext = b''.join(block[1:] for block in plainBlocks)
-
-        return plaintext.hex()
+        plaintext = [chr(pow(char, e, n)) for char in ciphertext]
+        return ''.join(plaintext)
         
+            
     def sha3(self,message):
-        hashedMessage = hashlib.sha3_256(message.encode("latin-1")).hexdigest()
-        return hashedMessage
+        messageBytes = message.encode('utf-8')
+        hashObject = hashlib.sha3_256()
+        hashObject.update(messageBytes)
+        return hashObject.hexdigest()
 
     def generateSignMessage(self, path, privateKey):
         with open(path, "r") as f:
             message = f.read()
-        
-        messageDigest = self.sha3(message)
-        messageDigest = bytes.fromhex(messageDigest)
-        sign = self.encrypt(messageDigest, privateKey)
+
+        sign = self.encrypt(message,privateKey)
 
         writtenSigned = "<d> " + sign + " </d>"
 
         self.writeSignInFile("signed_message.txt",writtenSigned, message)
         
-        return sign 
+        return sign
     
     def validateSignedMessage(self,path, publicKey):
         message = self.getMessageInSignedFile(path)
@@ -201,6 +189,6 @@ class Signing():
         if sign == None or sign == "":
             return False
 
-        signHex = bytes.fromhex(sign)
+        messageDecrypted = self.decrypt(sign, publicKey)
 
-        return self.sha3(message) == self.decrypt(signHex, publicKey)
+        return message == messageDecrypted

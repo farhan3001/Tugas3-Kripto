@@ -245,6 +245,7 @@ class MainWindow:
 
         except Exception as e:
             self.status.set(e)    
+            print(e)
 
         self.unfreezeControls()    
 
@@ -266,6 +267,7 @@ class MainWindow:
 
         except Exception as e:
             self.status.set(e)
+            print(e)
         
         self.unfreezeControls()
 
